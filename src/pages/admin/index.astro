@@ -1,0 +1,9 @@
+---
+import { ChurchApp } from '../../components/ChurchApp.jsx';
+import Layout from '../../layouts/Layout.astro';
+import { DEFAULT_PAGES } from '../../data/default-pages.js';
+---
+<Layout title="Church CMS" indexable={false}>
+  <div id="app"><ChurchApp initialPages={DEFAULT_PAGES} initialLoaded={true} forceAdmin={true} /></div>
+</Layout>
+<script>import '../../client/hydrate.js';</script>

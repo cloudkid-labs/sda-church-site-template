@@ -1,0 +1,17 @@
+---
+import '@cloudkid-labs/sda-church-site-core/styles.css';
+import '../styles/site.css';
+const { title = 'SDA Church', indexable = import.meta.env.PUBLIC_INDEXABLE === 'true' } = Astro.props;
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : null;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content={indexable ? 'index, follow' : 'noindex, nofollow'} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <title>{title}</title>
+  </head>
+  <body><slot /></body>
+</html>

@@ -1,0 +1,18 @@
+---
+import { ChurchApp } from '../components/ChurchApp.jsx';
+import Layout from '../layouts/Layout.astro';
+import { DEFAULT_PAGES } from '../data/default-pages.js';
+
+export function getStaticPaths() {
+  return DEFAULT_PAGES.filter((page) => page.slug !== 'home').map((page) => ({
+    params: { slug: page.slug },
+    props: { slug: page.slug },
+  }));
+}
+
+const { slug } = Astro.props;
+---
+<Layout title="SDA Church">
+  <div id="app"><ChurchApp initialPages={DEFAULT_PAGES} initialSlug={slug} initialLoaded={true} /></div>
+</Layout>
+<script>import '../client/hydrate.js';</script>

@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "replace-with-church-slug",
+  "main": "src/worker/index.js",
+  "compatibility_date": "2025-03-10",
+  "workers_dev": false,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "r2_buckets": [
+    {
+      "binding": "CMS",
+      "bucket_name": "replace-with-church-slug-cms"
+    }
+  ]
+}

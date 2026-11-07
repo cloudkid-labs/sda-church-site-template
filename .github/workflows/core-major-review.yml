@@ -1,0 +1,45 @@
+name: Require review for major core updates
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  major-core-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request ?? context.payload.review?.pull_request;
+            if (!pr) return;
+            const match = pr.title.match(/^Bump @cloudkid-labs\/sda-church-site-core from (\d+)\.(\d+)\.(\d+) to (\d+)\.(\d+)\.(\d+)/i);
+            if (!match || match[1] === match[4]) {
+              core.info('No major core update requires approval.');
+              return;
+            }
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+            const latestByReviewer = new Map();
+            for (const review of reviews) {
+              if (review.user?.type === 'Bot') continue;
+              const previous = latestByReviewer.get(review.user.login);
+              if (!previous || new Date(review.submitted_at) > new Date(previous.submitted_at)) {
+                latestByReviewer.set(review.user.login, review);
+              }
+            }
+            const approved = [...latestByReviewer.values()].some((review) => review.state === 'APPROVED');
+            if (!approved) {
+              core.setFailed('Major core updates need approval from a church maintainer before merge.');
+              return;
+            }
+            core.info('A church maintainer approved this major core update.');

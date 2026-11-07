@@ -1,0 +1,9 @@
+{
+  "id": "sample-church",
+  "name": { "af": "SDA Voorbeeld", "en": "Sample SDA Church" },
+  "locales": ["af", "en"],
+  "defaultLocale": "af",
+  "timezone": "Africa/Johannesburg",
+  "url": "https://example.invalid",
+  "theme": { "primary": "#17334d", "accent": "#dd7b33" }
+}
