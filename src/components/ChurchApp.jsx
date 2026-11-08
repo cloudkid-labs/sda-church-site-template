@@ -1,13 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CmsPage, createEmptyCmsPage, isVisible, localize, validateCmsPage } from '@cloudkid-labs/sda-church-site-core';
+import { CmsPage, createEmptyCmsPage, localize, validateCmsPage } from '@cloudkid-labs/sda-church-site-core';
+import { ChurchLanguageSwitcher, ChurchLocaleProvider, useChurchLocale } from '@cloudkid-labs/sda-church-site-core/locale';
 import { DEFAULT_PAGES } from '../data/default-pages.js';
 import { site } from '../site-config.js';
 
 const h = React.createElement;
 
 export function ChurchApp({ initialPages = DEFAULT_PAGES, initialSlug = 'home', initialLoaded = false, forceAdmin = false }) {
+  return h(ChurchLocaleProvider, { site }, h(ChurchAppContent, { initialPages, initialSlug, initialLoaded, forceAdmin }));
+}
+
+function ChurchAppContent({ initialPages, initialSlug, initialLoaded, forceAdmin }) {
+  const { locale, setLocale } = useChurchLocale();
   const [pages, setPages] = useState(initialPages);
-  const [locale, setLocale] = useState(site.defaultLocale);
   const [loaded, setLoaded] = useState(initialLoaded);
   const [routeSlug, setRouteSlug] = useState(initialSlug);
 
@@ -29,8 +34,6 @@ export function ChurchApp({ initialPages = DEFAULT_PAGES, initialSlug = 'home', 
     const route = window.location.pathname.split('/').filter(Boolean)[0] ?? 'home';
     setRouteSlug(route);
   }, [forceAdmin, initialSlug]);
-  useEffect(() => { document.documentElement.lang = locale; }, [locale]);
-
   const configuredSite = useMemo(() => ({ ...site, pages: pages.map((item) => ({
     slug: item.slug === 'home' ? '' : item.slug,
     home: item.slug === 'home',
@@ -44,10 +47,7 @@ export function ChurchApp({ initialPages = DEFAULT_PAGES, initialSlug = 'home', 
   if (!page) return h('main', { className: 'template-loading' }, h('h1', null, locale === 'af' ? 'Bladsy nie gevind nie' : 'Page not found'));
 
   return h(React.Fragment, null,
-    isVisible(site, 'language.switcher') && h('div', { className: 'template-language' },
-      h('button', { type: 'button', onClick: () => setLocale('af'), 'aria-pressed': locale === 'af' }, 'AF'),
-      h('button', { type: 'button', onClick: () => setLocale('en'), 'aria-pressed': locale === 'en' }, 'EN'),
-    ),
+    h(ChurchLanguageSwitcher, { site, className: 'template-language' }),
     h(CmsPage, { site: configuredSite, page, locale, currentPath: `${routeSlug === 'home' ? '' : `/${routeSlug}`}/` }),
   );
 }
@@ -103,16 +103,60 @@ function CmsEditor({ pages, locale, setLocale, reload, loaded }) {
     if (response.ok) { setSelected('home'); await reload(); }
   }
 
+  function renderBlockEditor(block, index) {
+    const removeBlock = () => setDraft({ ...draft, blocks: draft.blocks.filter((_, i) => i !== index) });
+    let fields;
+
+    if (block.type === 'map') {
+      fields = [h('p', { key: 'map-help' }, locale === 'af' ? 'Die kaart gebruik die adres en koördinate in die kerkinstellings.' : 'The map uses the address and coordinates in the church settings.')];
+    } else if (block.type === 'cardGrid') {
+      fields = [
+        h('fieldset', { className: 'cms-fieldset', key: 'heading' },
+          h('legend', null, locale === 'af' ? 'Opskrif' : 'Heading'),
+          ...['af', 'en'].map((lang) => h('label', { className: 'cms-field', key: lang }, lang.toUpperCase(), h('input', { value: block.heading?.[lang] ?? '', onChange: (event) => updateBlock(index, 'heading', lang, event.target.value) }))),
+        ),
+        ...(block.cards ?? []).map((card, cardIndex) => h('div', { className: 'cms-card-editor', key: cardIndex },
+          h('strong', null, `${locale === 'af' ? 'Kaart' : 'Card'} ${cardIndex + 1}`),
+          ...['title', 'body'].map((field) => h('fieldset', { className: 'cms-fieldset', key: field },
+            h('legend', null, field === 'title' ? (locale === 'af' ? 'Titel' : 'Title') : (locale === 'af' ? 'Teks' : 'Text')),
+            ...['af', 'en'].map((lang) => h('label', { className: 'cms-field', key: `${field}-${lang}` }, lang.toUpperCase(),
+              field === 'title'
+                ? h('input', { value: card[field]?.[lang] ?? '', onChange: (event) => updateCard(index, cardIndex, field, lang, event.target.value) })
+                : h('textarea', { rows: 3, value: card[field]?.[lang] ?? '', onChange: (event) => updateCard(index, cardIndex, field, lang, event.target.value) }),
+            )),
+          )),
+          h('button', { type: 'button', onClick: () => { const blocks = draft.blocks.slice(); blocks[index] = { ...block, cards: block.cards.filter((_, i) => i !== cardIndex) }; setDraft({ ...draft, blocks }); } }, locale === 'af' ? 'Verwyder kaart' : 'Remove card'),
+        )),
+        h('button', { type: 'button', key: 'add-card', onClick: () => { const blocks = draft.blocks.slice(); blocks[index] = { ...block, cards: [...(block.cards ?? []), { title: { af: '', en: '' }, body: { af: '', en: '' } }] }; setDraft({ ...draft, blocks }); } }, locale === 'af' ? 'Voeg kaart by' : 'Add card'),
+      ];
+    } else {
+      fields = ['heading', 'body'].map((field) => h('fieldset', { className: 'cms-fieldset', key: field },
+        h('legend', null, field === 'heading' ? (locale === 'af' ? 'Opskrif' : 'Heading') : (locale === 'af' ? 'Teks' : 'Text')),
+        ...['af', 'en'].map((lang) => h('label', { className: 'cms-field', key: `${field}-${lang}` }, lang.toUpperCase(),
+          field === 'heading'
+            ? h('input', { value: block[field]?.[lang] ?? '', onChange: (event) => updateBlock(index, field, lang, event.target.value) })
+            : h('textarea', { rows: 4, value: block[field]?.[lang] ?? '', onChange: (event) => updateBlock(index, field, lang, event.target.value) }),
+        )),
+      ));
+    }
+
+    return h('article', { className: 'cms-block-editor', key: block.id ?? index },
+      h('header', null,
+        h('strong', null, block.type === 'callout' ? 'Callout' : block.type === 'cardGrid' ? 'Cards' : block.type === 'map' ? (locale === 'af' ? 'Kaart' : 'Map') : 'Text'),
+        h('label', { className: 'cms-check' }, h('input', { type: 'checkbox', checked: block.enabled !== false, onChange: (event) => { const blocks = draft.blocks.slice(); blocks[index] = { ...block, enabled: event.target.checked }; setDraft({ ...draft, blocks }); } }), locale === 'af' ? 'Sigbaar' : 'Visible'),
+        h('button', { type: 'button', onClick: removeBlock }, locale === 'af' ? 'Verwyder afdeling' : 'Remove section'),
+      ),
+      ...fields,
+    );
+  }
+
   if (!loaded) return h('main', { className: 'cms-editor' }, 'Loading CMS…');
   if (!draft) return h('main', { className: 'cms-editor' }, 'No pages are available.');
 
   return h('main', { className: 'cms-editor' },
     h('header', { className: 'cms-editor__top' },
       h('a', { href: '/' }, localize(site.name, locale)),
-      h('div', { className: 'template-language' },
-        h('button', { type: 'button', onClick: () => setLocale('af') }, 'AF'),
-        h('button', { type: 'button', onClick: () => setLocale('en') }, 'EN'),
-      ),
+      h(ChurchLanguageSwitcher, { site }),
     ),
     h('h1', null, locale === 'af' ? 'Webwerf inhoud' : 'Website content'),
     h('p', null, locale === 'af' ? 'Wysig bladsye en afdelings. Veranderinge raak net hierdie kerk se webwerf.' : 'Edit pages and sections. Changes affect only this church website.'),
@@ -142,44 +186,7 @@ function CmsEditor({ pages, locale, setLocale, reload, loaded }) {
         h('button', { type: 'button', onClick: () => setDraft({ ...draft, blocks: [...draft.blocks, { id: crypto.randomUUID(), type: 'cardGrid', enabled: true, heading: { af: '', en: '' }, cards: [{ title: { af: '', en: '' }, body: { af: '', en: '' } }] }] }) }, locale === 'af' ? 'Voeg kaartafdeling by' : 'Add card section'),
         h('button', { type: 'button', onClick: () => setDraft({ ...draft, blocks: [...draft.blocks, { id: crypto.randomUUID(), type: 'map', enabled: true }] }) }, locale === 'af' ? 'Voeg kaart by' : 'Add map'),
       ),
-      ...(draft.blocks ?? []).map((block, index) => h('article', { className: 'cms-block-editor', key: block.id ?? index },
-        h('header', null,
-          h('strong', null, block.type === 'callout' ? 'Callout' : block.type === 'cardGrid' ? 'Cards' : block.type === 'map' ? (locale === 'af' ? 'Kaart' : 'Map') : 'Text'),
-          h('label', { className: 'cms-check' }, h('input', { type: 'checkbox', checked: block.enabled !== false, onChange: (event) => { const blocks = draft.blocks.slice(); blocks[index] = { ...block, enabled: event.target.checked }; setDraft({ ...draft, blocks }); } }), locale === 'af' ? 'Sigbaar' : 'Visible'),
-          h('button', { type: 'button', onClick: () => setDraft({ ...draft, blocks: draft.blocks.filter((_, i) => i !== index) }) }, locale === 'af' ? 'Verwyder afdeling' : 'Remove section'),
-        ),
-        ...(block.type === 'map'
-          ? [h('p', { key: 'map-help' }, locale === 'af' ? 'Die kaart gebruik die adres en koördinate in die kerkinstellings.' : 'The map uses the address and coordinates in the church settings.')]
-          : block.type === 'cardGrid'
-          ? [
-              h('fieldset', { className: 'cms-fieldset', key: 'heading' },
-                h('legend', null, locale === 'af' ? 'Opskrif' : 'Heading'),
-                ...['af', 'en'].map((lang) => h('label', { className: 'cms-field', key: lang }, lang.toUpperCase(), h('input', { value: block.heading?.[lang] ?? '', onChange: (event) => updateBlock(index, 'heading', lang, event.target.value) }))),
-              ),
-              ...(block.cards ?? []).map((card, cardIndex) => h('div', { className: 'cms-card-editor', key: cardIndex },
-                h('strong', null, `${locale === 'af' ? 'Kaart' : 'Card'} ${cardIndex + 1}`),
-                ...['title', 'body'].map((field) => h('fieldset', { className: 'cms-fieldset', key: field },
-                  h('legend', null, field === 'title' ? (locale === 'af' ? 'Titel' : 'Title') : (locale === 'af' ? 'Teks' : 'Text')),
-                  ...['af', 'en'].map((lang) => h('label', { className: 'cms-field', key: `${field}-${lang}` }, lang.toUpperCase(),
-                    field === 'title'
-                      ? h('input', { value: card[field]?.[lang] ?? '', onChange: (event) => updateCard(index, cardIndex, field, lang, event.target.value) })
-                      : h('textarea', { rows: 3, value: card[field]?.[lang] ?? '', onChange: (event) => updateCard(index, cardIndex, field, lang, event.target.value) }),
-                  )),
-                )),
-                h('button', { type: 'button', onClick: () => { const blocks = draft.blocks.slice(); blocks[index] = { ...block, cards: block.cards.filter((_, i) => i !== cardIndex) }; setDraft({ ...draft, blocks }); } }, locale === 'af' ? 'Verwyder kaart' : 'Remove card'),
-              )),
-              h('button', { type: 'button', key: 'add-card', onClick: () => { const blocks = draft.blocks.slice(); blocks[index] = { ...block, cards: [...(block.cards ?? []), { title: { af: '', en: '' }, body: { af: '', en: '' } }] }; setDraft({ ...draft, blocks }); } }, locale === 'af' ? 'Voeg kaart by' : 'Add card'),
-            ]
-          : ['heading', 'body'].map((field) => h('fieldset', { className: 'cms-fieldset', key: field },
-              h('legend', null, field === 'heading' ? (locale === 'af' ? 'Opskrif' : 'Heading') : (locale === 'af' ? 'Teks' : 'Text')),
-              ...['af', 'en'].map((lang) => h('label', { className: 'cms-field', key: `${field}-${lang}` }, lang.toUpperCase(),
-                field === 'heading'
-                  ? h('input', { value: block[field]?.[lang] ?? '', onChange: (event) => updateBlock(index, field, lang, event.target.value) })
-                  : h('textarea', { rows: 4, value: block[field]?.[lang] ?? '', onChange: (event) => updateBlock(index, field, lang, event.target.value) }),
-              )),
-            )),
-        ),
-      )),
+      ...(draft.blocks ?? []).map(renderBlockEditor),
     ),
     h('footer', { className: 'cms-editor__actions' },
       h('button', { type: 'button', onClick: save }, locale === 'af' ? 'Stoor veranderinge' : 'Save changes'),
