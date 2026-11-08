@@ -1,0 +1,26 @@
+{
+  "name": "sda-church-site",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "setup": "node scripts/setup-church.mjs",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "worker:dev": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@astrojs/react": "^4.2.0",
+    "@cloudkid-labs/sda-church-site-core": "^1.0.0",
+    "astro": "^5.7.0",
+    "jose": "^6.0.11",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "wrangler": "^4.6.0"
+  }
+}

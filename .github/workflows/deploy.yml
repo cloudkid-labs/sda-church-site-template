@@ -1,0 +1,40 @@
+name: Deploy church site
+
+on:
+  workflow_dispatch:
+    inputs:
+      indexable:
+        description: 'Allow search engines to index the configured public domain'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: '@cloudkid-labs'
+      - name: Install dependencies
+        run: npm install --no-audit --fund=false
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_READ_TOKEN || github.token }}
+      - name: Build site
+        run: npm run build
+        env:
+          PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+          PUBLIC_INDEXABLE: ${{ inputs.indexable }}
+      - name: Deploy independent Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
