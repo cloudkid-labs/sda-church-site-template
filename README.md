@@ -9,7 +9,7 @@ This repository is the starter for an independent church website. It uses the sh
 3. Configure npm access to GitHub Packages. Add a classic token with `read:packages` to your local environment as `NODE_AUTH_TOKEN`.
 4. Run `npm run setup` to set the church name, slug, domain, timezone, colors, map addresses and coordinates, package name, and Worker name.
 5. Run `npm install`.
-6. Create the R2 bucket named by `wrangler.jsonc`, add repository secrets `GH_PACKAGES_READ_TOKEN`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID`, and set `PUBLIC_SITE_URL` as a repository variable.
+6. Create the R2 bucket named by `wrangler.jsonc`, add repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, and set `PUBLIC_SITE_URL` as a repository variable. The workflows use `GITHUB_TOKEN` to read the shared package when repository package access allows it; otherwise add `GH_PACKAGES_READ_TOKEN` with `read:packages`.
 7. In Cloudflare, protect `/admin*` and `/api/cms/*` with an Access application and restrict it to the church's authorized editors. Leave `/api/public/*` public. Confirm the Worker has no `workers.dev` endpoint, then dispatch **Deploy church site**.
 
 Do not deploy while the sample configuration remains. `npm run setup` creates a custom domain route and an R2 bucket name, but the domain must belong to the church and be active in the same Cloudflare account. Create the bucket before deploying.
@@ -31,7 +31,7 @@ Page and section layout is shared through the core package; each site owns its c
 
 ## Core update policy
 
-Dependabot checks GitHub Packages weekly. Add `GH_PACKAGES_READ_TOKEN` as a Dependabot secret and as an Actions secret in the repository. The included workflow enables auto-merge for patch and minor updates within the current major version only after the build succeeds. Major updates stay open for church review. Protect `main` and require the `Build church site / build` and `Require review for major core updates / major-core-review` checks; the latter remains failed until a maintainer approves a major update. Enable GitHub auto-merge in the repository settings.
+Dependabot checks GitHub Packages weekly. Add `GH_PACKAGES_READ_TOKEN` as a Dependabot secret. The included workflow enables auto-merge for patch and minor updates within the current major version only after the build succeeds. Major updates stay open for church review. Protect `main` and require the `Build church site / build` and `Require review for major core updates / major-core-review` checks; the latter remains failed until a maintainer approves a major update. Enable GitHub auto-merge in the repository settings.
 
 ## Independent deployment
 
