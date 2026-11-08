@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",
-    "@cloudkid-labs/sda-church-site-core": "^1.0.0",
+    "@cloudkid-labs/sda-church-site-core": "^1.1.0",
     "astro": "^5.7.0",
     "jose": "^6.0.11",
     "react": "^19.0.0",

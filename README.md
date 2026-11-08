@@ -29,6 +29,23 @@ Open `/admin` after configuring Access. The editor can add or remove pages, publ
 
 Page and section layout is shared through the core package; each site owns its content and theme. The core provides text, callout, card-grid, FAQ, image, link-list, and map blocks. Church-specific integrations stay in that church's repo.
 
+## Visibility configuration
+
+Set optional keys in `src/site.json` under `visibility`. Missing keys remain visible; `false` hides that element and its descendants. Use dotted keys such as:
+
+```json
+{
+  "visibility": {
+    "language.switcher": false,
+    "navigation.brand": false,
+    "page.home.title": false,
+    "page.home.block.service-times.card.0.title": false
+  }
+}
+```
+
+The shared core applies keys to navigation, page headings and intros, CMS blocks and their nested fields, cards, FAQs, links, and map details. The key paths use each block's `id`; indexed blocks use their current position. This file is build-time configuration, so changes need a deploy. Page and block visibility can also be changed in the CMS editor.
+
 ## Core update policy
 
 Dependabot checks GitHub Packages weekly. Add `GH_PACKAGES_READ_TOKEN` as a Dependabot secret. The included workflow enables auto-merge for patch and minor updates within the current major version only after the build succeeds. Major updates stay open for church review. Protect `main` and require the `Build church site / build` and `Require review for major core updates / major-core-review` checks; the latter remains failed until a maintainer approves a major update. Enable GitHub auto-merge in the repository settings.
