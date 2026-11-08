@@ -1,5 +1,6 @@
 import React from 'react';
 import { renderToString } from 'react-dom/server';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { isCmsSlug, validateCmsPage } from '@cloudkid-labs/sda-church-site-core/cms';
 import { localize } from '@cloudkid-labs/sda-church-site-core';
 import { ChurchApp } from '../components/ChurchApp.jsx';
@@ -10,6 +11,29 @@ const json = (value, status = 200) => new Response(JSON.stringify(value), {
   status,
   headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
 });
+
+let accessJwks;
+let accessJwksIssuer;
+
+async function hasValidAccessJwt(request, env) {
+  const hostname = new URL(request.url).hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') return true;
+  const teamDomain = env.CF_ACCESS_TEAM_DOMAIN?.trim();
+  const audience = env.CF_ACCESS_AUD?.trim();
+  const token = request.headers.get('CF-Access-Jwt-Assertion');
+  if (!teamDomain || !audience || !token || !/^[a-z0-9.-]+$/i.test(teamDomain)) return false;
+  const issuer = `https://${teamDomain}`;
+  if (!accessJwks || accessJwksIssuer !== issuer) {
+    accessJwks = createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
+    accessJwksIssuer = issuer;
+  }
+  try {
+    await jwtVerify(token, accessJwks, { issuer, audience });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 async function getPages(bucket) {
   const merged = new Map(DEFAULT_PAGES.map((page) => [page.slug, page]));
@@ -31,15 +55,12 @@ async function getPublicPages(bucket) {
 async function cms(request, env) {
   const url = new URL(request.url);
   const slug = url.searchParams.get('slug');
+  if (!(await hasValidAccessJwt(request, env))) return json({ error: 'unauthorized' }, 401);
   if (request.method === 'GET') {
     const pages = await getPages(env.CMS);
     if (slug) return json(pages.find((page) => page.slug === slug) ?? { error: 'not found' }, pages.some((page) => page.slug === slug) ? 200 : 404);
     return json(pages);
   }
-
-  // Cloudflare Access protects /admin/* and /api/cms/*, with workers.dev
-  // disabled. This header check is defense in depth; Access is the auth layer.
-  if (!request.headers.has('CF-Access-Jwt-Assertion')) return json({ error: 'unauthorized' }, 401);
 
   if (request.method === 'PUT') {
     const size = Number(request.headers.get('content-length') ?? 0);

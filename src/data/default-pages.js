@@ -19,6 +19,7 @@ export const DEFAULT_PAGES = [
           { title: { af: 'Erediens', en: 'Divine service' }, body: { af: 'Voeg die tyd by.', en: 'Add the time.' } },
         ],
       },
+      { id: 'church-map', type: 'map', enabled: true },
     ],
   },
   {

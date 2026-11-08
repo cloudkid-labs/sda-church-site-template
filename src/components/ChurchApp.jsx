@@ -140,14 +140,17 @@ function CmsEditor({ pages, locale, setLocale, reload, loaded }) {
         h('button', { type: 'button', onClick: () => setDraft({ ...draft, blocks: [...draft.blocks, { id: crypto.randomUUID(), type: 'text', enabled: true, heading: { af: '', en: '' }, body: { af: '', en: '' } }] }) }, locale === 'af' ? 'Voeg teksafdeling by' : 'Add text section'),
         h('button', { type: 'button', onClick: () => setDraft({ ...draft, blocks: [...draft.blocks, { id: crypto.randomUUID(), type: 'callout', enabled: true, heading: { af: '', en: '' }, body: { af: '', en: '' } }] }) }, locale === 'af' ? 'Voeg uitlig-afdeling by' : 'Add callout section'),
         h('button', { type: 'button', onClick: () => setDraft({ ...draft, blocks: [...draft.blocks, { id: crypto.randomUUID(), type: 'cardGrid', enabled: true, heading: { af: '', en: '' }, cards: [{ title: { af: '', en: '' }, body: { af: '', en: '' } }] }] }) }, locale === 'af' ? 'Voeg kaartafdeling by' : 'Add card section'),
+        h('button', { type: 'button', onClick: () => setDraft({ ...draft, blocks: [...draft.blocks, { id: crypto.randomUUID(), type: 'map', enabled: true }] }) }, locale === 'af' ? 'Voeg kaart by' : 'Add map'),
       ),
       ...(draft.blocks ?? []).map((block, index) => h('article', { className: 'cms-block-editor', key: block.id ?? index },
         h('header', null,
-          h('strong', null, block.type === 'callout' ? 'Callout' : block.type === 'cardGrid' ? 'Cards' : 'Text'),
+          h('strong', null, block.type === 'callout' ? 'Callout' : block.type === 'cardGrid' ? 'Cards' : block.type === 'map' ? (locale === 'af' ? 'Kaart' : 'Map') : 'Text'),
           h('label', { className: 'cms-check' }, h('input', { type: 'checkbox', checked: block.enabled !== false, onChange: (event) => { const blocks = draft.blocks.slice(); blocks[index] = { ...block, enabled: event.target.checked }; setDraft({ ...draft, blocks }); } }), locale === 'af' ? 'Sigbaar' : 'Visible'),
           h('button', { type: 'button', onClick: () => setDraft({ ...draft, blocks: draft.blocks.filter((_, i) => i !== index) }) }, locale === 'af' ? 'Verwyder afdeling' : 'Remove section'),
         ),
-        ...(block.type === 'cardGrid'
+        ...(block.type === 'map'
+          ? [h('p', { key: 'map-help' }, locale === 'af' ? 'Die kaart gebruik die adres en koördinate in die kerkinstellings.' : 'The map uses the address and coordinates in the church settings.')]
+          : block.type === 'cardGrid'
           ? [
               h('fieldset', { className: 'cms-fieldset', key: 'heading' },
                 h('legend', null, locale === 'af' ? 'Opskrif' : 'Heading'),
