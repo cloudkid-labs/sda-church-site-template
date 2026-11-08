@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CmsPage, createEmptyCmsPage, localize, validateCmsPage } from '@cloudkid-labs/sda-church-site-core';
+import { CmsPage, createEmptyCmsPage, isVisible, localize, validateCmsPage } from '@cloudkid-labs/sda-church-site-core';
 import { DEFAULT_PAGES } from '../data/default-pages.js';
 import { site } from '../site-config.js';
 
@@ -44,7 +44,7 @@ export function ChurchApp({ initialPages = DEFAULT_PAGES, initialSlug = 'home', 
   if (!page) return h('main', { className: 'template-loading' }, h('h1', null, locale === 'af' ? 'Bladsy nie gevind nie' : 'Page not found'));
 
   return h(React.Fragment, null,
-    h('div', { className: 'template-language' },
+    isVisible(site, 'language.switcher') && h('div', { className: 'template-language' },
       h('button', { type: 'button', onClick: () => setLocale('af'), 'aria-pressed': locale === 'af' }, 'AF'),
       h('button', { type: 'button', onClick: () => setLocale('en'), 'aria-pressed': locale === 'en' }, 'EN'),
     ),
