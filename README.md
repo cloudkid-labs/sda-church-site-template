@@ -46,6 +46,8 @@ Set optional keys in `src/site.json` under `visibility`. Missing keys remain vis
 
 The shared core applies keys to navigation, page headings and intros, CMS blocks and their nested fields, cards, FAQs, links, and map details. The key paths use each block's `id`; indexed blocks use their current position. This file is build-time configuration, so changes need a deploy. Page and block visibility can also be changed in the CMS editor.
 
+The template uses Core's `ChurchLocaleProvider` and `ChurchLanguageSwitcher`. The configured default locale is rendered first for hydration, then a visitor's saved choice is restored across page navigation. Custom React components can read and change that same choice with `useChurchLocale()`.
+
 ## Core update policy
 
 Dependabot checks GitHub Packages weekly. Add `GH_PACKAGES_READ_TOKEN` as a Dependabot secret. The included workflow enables auto-merge for patch and minor updates within the current major version only after the build succeeds. Major updates stay open for church review. Protect `main` and require the `Build church site / build` and `Require review for major core updates / major-core-review` checks; the latter remains failed until a maintainer approves a major update. Enable GitHub auto-merge in the repository settings.
