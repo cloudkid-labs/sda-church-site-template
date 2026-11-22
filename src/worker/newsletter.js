@@ -57,7 +57,7 @@ export async function handleNewsletter(request, env) {
     return json({ ok: false }, 400);
   }
   const email = payload.email.trim();
-  if (email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return json({ ok: false }, 400);
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ ok: false }, 400);
 
   const hostnames = env.TURNSTILE_HOSTNAMES.split(',').map((host) => host.trim()).filter(Boolean);
   if (!await verifyToken(payload.token, env.TURNSTILE_SECRET_KEY, ip, hostnames)) return json({ ok: false }, 400);
