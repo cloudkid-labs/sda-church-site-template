@@ -48,6 +48,27 @@ The shared core applies keys to navigation, page headings and intros, CMS blocks
 
 The template uses Core's `ChurchLocaleProvider` and `ChurchLanguageSwitcher`. The configured default locale is rendered first for hydration, then a visitor's saved choice is restored across page navigation. Custom React components can read and change that same choice with `useChurchLocale()`.
 
+## Newsletter signup
+
+Core's `CmsPage` renders the configurable newsletter form on the home page when `site.newsletter.enabled` is true. The starter leaves it disabled. To enable it, update `src/site.json` with the public Turnstile site key and the church's localized copy. Add a working privacy policy route and set `privacyHref`.
+
+```json
+{
+  "newsletter": {
+    "enabled": true,
+    "endpoint": "/api/newsletter",
+    "turnstileSiteKey": "public-site-key",
+    "privacyHref": "/privacy/",
+    "copy": {
+      "title": { "af": "Bly op hoogte", "en": "Stay in touch" },
+      "consent": { "af": "Ek stem in om nuusbriewe te ontvang.", "en": "I agree to receive newsletters." }
+    }
+  }
+}
+```
+
+The template Worker endpoint is an optional Brevo example. Set `NEWSLETTER_LIST_ID` and `TURNSTILE_HOSTNAMES` in `wrangler.jsonc`, choose a rate-limit namespace ID unique within the Cloudflare account, and add `BREVO_API_KEY` and `TURNSTILE_SECRET_KEY` with `npx wrangler secret put`. Configure the Turnstile site key for the site's hostname. The endpoint stays disabled until all settings and the rate limiter are present; it validates consent and Turnstile before adding a contact to the configured Brevo list. Keep production and development lists and credentials separate. Core handles the public form; the Worker owns the provider and secrets.
+
 ## Core update policy
 
 Dependabot checks GitHub Packages weekly. Add `GH_PACKAGES_READ_TOKEN` as a Dependabot secret. The included workflow enables auto-merge for patch and minor updates within the current major version only after the build succeeds. Major updates stay open for church review. Protect `main` and require the `Build church site / build` and `Require review for major core updates / major-core-review` checks; the latter remains failed until a maintainer approves a major update. Enable GitHub auto-merge in the repository settings.
