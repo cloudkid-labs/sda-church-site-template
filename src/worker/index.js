@@ -6,6 +6,7 @@ import { localize } from '@cloudkid-labs/sda-church-site-core';
 import { ChurchApp } from '../components/ChurchApp.jsx';
 import { DEFAULT_PAGES } from '../data/default-pages.js';
 import { site } from '../site-config.js';
+import { handleNewsletter } from './newsletter.js';
 
 const json = (value, status = 200) => new Response(JSON.stringify(value), {
   status,
@@ -149,6 +150,7 @@ export default {
       if (slug) return json(pages.find((page) => page.slug === slug) ?? { error: 'not found' }, pages.some((page) => page.slug === slug) ? 200 : 404);
       return json(pages);
     }
+    if (url.pathname === '/api/newsletter') return handleNewsletter(request, env);
     if (url.pathname === '/api/cms/pages') return cms(request, env);
     if (url.pathname === '/admin' || url.pathname === '/admin/') {
       return env.ASSETS.fetch(new Request(new URL('/admin/index.html', url), request));

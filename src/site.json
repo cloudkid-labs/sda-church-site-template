@@ -1,10 +1,23 @@
 {
   "id": "sample-church",
-  "name": { "af": "SDA Voorbeeld", "en": "Sample SDA Church" },
-  "locales": ["af", "en"],
+  "name": {
+    "af": "SDA Voorbeeld",
+    "en": "Sample SDA Church"
+  },
+  "locales": [
+    "af",
+    "en"
+  ],
   "defaultLocale": "af",
   "timezone": "Africa/Johannesburg",
   "url": "https://example.invalid",
   "visibility": {},
-  "theme": { "primary": "#17334d", "accent": "#dd7b33" }
+  "theme": {
+    "primary": "#17334d",
+    "accent": "#dd7b33"
+  },
+  "newsletter": {
+    "enabled": false,
+    "endpoint": "/api/newsletter"
+  }
 }
