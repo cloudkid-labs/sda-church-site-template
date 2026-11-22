@@ -18,7 +18,6 @@
   },
   "newsletter": {
     "enabled": false,
-    "endpoint": "/api/newsletter",
-    "privacyHref": "/privacy/"
+    "endpoint": "/api/newsletter"
   }
 }
